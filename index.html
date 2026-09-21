@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Project Bank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+/* ── tokens ──────────────────────────────────────────────────────────── */
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+
+  --ground:#D8D4CA;
+  --ground-2:#C6C1B5;
+  --on-ground:#18222E;
+  --on-ground-dim:#5B6572;
+  --paper:#F8F7F3;
+  --paper-edge:#DCD8CF;
+  --ink:#18222E;
+  --ink-dim:#586472;
+  --mark:#D24417;
+  --rule:rgba(24,34,46,.18);
+  --shadow:0 1px 0 rgba(24,34,46,.22), 0 10px 22px -14px rgba(24,34,46,.55);
+
+  --h-photography:#2E7F96;
+  --h-graphic-design:#D24417;
+  --h-video:#B31C63;
+  --h-animation:#C08A10;
+  --h-web-media:#4A8C4A;
+  --h-cross-discipline:#6F63B5;
+
+  --step:1.5rem;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#131D27;
+    --ground-2:#1C2833;
+    --on-ground:#E7E3DA;
+    --on-ground-dim:#8C98A5;
+    --rule:rgba(231,227,218,.16);
+    --shadow:0 1px 0 rgba(0,0,0,.5), 0 16px 30px -18px rgba(0,0,0,.9);
+    --mark:#F0632B;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#131D27; --ground-2:#1C2833; --on-ground:#E7E3DA; --on-ground-dim:#8C98A5;
+  --rule:rgba(231,227,218,.16);
+  --shadow:0 1px 0 rgba(0,0,0,.5), 0 16px 30px -18px rgba(0,0,0,.9);
+  --mark:#F0632B;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--on-ground);
+  font-family:'Archivo','Helvetica Neue',Helvetica,Arial,sans-serif;
+  font-size:16px;
+  line-height:1.45;
+  font-variant-numeric:tabular-nums;
+}
+img{max-width:100%;display:block}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+
+.wrap{max-width:1360px;margin:0 auto;padding:0 clamp(1rem,3vw,2.5rem)}
+
+/* ── masthead ────────────────────────────────────────────────────────── */
+.masthead{padding:clamp(1.5rem,4vw,2.75rem) 0 1rem}
+.masthead h1{
+  margin:0;
+  font-weight:800;
+  font-size:clamp(2.4rem,7.5vw,4.5rem);
+  line-height:.92;
+  letter-spacing:-.035em;
+}
+.masthead h1 span{display:block}
+.lede{
+  margin:.9rem 0 0;
+  max-width:46ch;
+  font-size:clamp(1rem,1.6vw,1.15rem);
+  color:var(--on-ground-dim);
+}
+
+/* ── filter rack ─────────────────────────────────────────────────────── */
+.rack{
+  margin-top:1.6rem;
+  border-top:1px solid var(--rule);
+  padding-top:.9rem;
+  display:flex;
+  flex-wrap:wrap;
+  gap:.45rem;
+  align-items:center;
+}
+.rack-group{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.rack-sep{flex:1 1 1.5rem;min-width:.5rem}
+.chip{
+  border:1px solid var(--rule);
+  background:transparent;
+  border-radius:999px;
+  padding:.34rem .8rem;
+  font-size:.86rem;
+  font-weight:500;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:.45rem;
+  transition:background .12s ease,border-color .12s ease;
+}
+.chip:hover{border-color:var(--on-ground)}
+.chip .dot{width:.55rem;height:.55rem;border-radius:2px;background:var(--hue,var(--on-ground-dim))}
+.chip[aria-pressed="true"]{background:var(--on-ground);color:var(--ground);border-color:var(--on-ground)}
+.chip[aria-pressed="true"] .dot{background:var(--ground)}
+.chip.ghost{border-style:dashed;color:var(--on-ground-dim)}
+.count{font-size:.86rem;color:var(--on-ground-dim);white-space:nowrap}
+
+/* ── ticket grid ─────────────────────────────────────────────────────── */
+.grid{
+  margin:1.6rem 0 4rem;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(258px,1fr));
+  gap:clamp(1rem,2vw,1.6rem);
+}
+.ticket{
+  --hue:var(--on-ground-dim);
+  position:relative;
+  text-align:left;
+  background:var(--paper);
+  color:var(--ink);
+  border:none;
+  border-radius:3px;
+  padding:0;
+  cursor:pointer;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  transform:translateY(0);
+  transition:transform .14s ease, box-shadow .14s ease;
+}
+.ticket::before{
+  content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--hue);z-index:2;
+}
+.ticket:hover,.ticket:focus-visible{
+  transform:translateY(-3px);
+  box-shadow:0 1px 0 rgba(24,34,46,.22), 0 20px 30px -16px rgba(24,34,46,.6);
+}
+.plate{position:relative;aspect-ratio:4/3;background:#E9E6DF;overflow:hidden}
+.plate img,.plate svg{width:100%;height:100%;object-fit:cover;display:block}
+.plate .scope{
+  position:absolute;left:.85rem;bottom:.7rem;z-index:2;
+  background:var(--paper);color:var(--ink);
+  font-size:.72rem;font-weight:600;letter-spacing:.01em;
+  padding:.16rem .5rem;border-radius:2px;
+}
+.body{padding:.9rem 1rem .5rem 1.1rem;flex:1 1 auto}
+.body h2{margin:0;font-size:1.06rem;font-weight:700;line-height:1.18;letter-spacing:-.012em}
+.hook{margin:.42rem 0 0;font-size:.92rem;line-height:1.4;color:var(--ink-dim)}
+.stub{
+  margin-top:.75rem;
+  border-top:1px dashed var(--paper-edge);
+  padding:.55rem 1rem .7rem 1.1rem;
+  display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+  font-size:.74rem;color:var(--ink-dim);
+}
+.jobno{font-weight:700;color:var(--hue);letter-spacing:.02em}
+.diff{display:inline-flex;gap:2px;align-items:center}
+.diff i{width:.5rem;height:.5rem;border-radius:50%;border:1px solid var(--ink-dim);display:block}
+.diff i.on{background:var(--ink-dim)}
+.badges{display:flex;gap:.25rem;flex-wrap:wrap;margin-left:auto}
+.badges b{
+  font-weight:600;font-size:.68rem;
+  border:1px solid var(--paper-edge);border-radius:2px;
+  padding:.06rem .3rem;color:var(--ink-dim);
+}
+.claimed{
+  position:absolute;top:.7rem;right:.7rem;z-index:3;
+  background:var(--ink);color:var(--paper);
+  font-size:.68rem;font-weight:700;padding:.18rem .45rem;border-radius:2px;
+}
+
+/* ── sketches ────────────────────────────────────────────────────────── */
+.sk-head{
+  margin:2.2rem 0 1rem;
+  font-size:1.05rem;font-weight:600;letter-spacing:-.01em;
+  color:var(--on-ground-dim);
+  border-top:1px solid var(--rule);padding-top:1.1rem;
+}
+.sk-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+  gap:.75rem;margin-bottom:3.5rem;
+}
+.ticket.sketch{
+  background:transparent;color:var(--on-ground);
+  box-shadow:none;
+  border:1px dashed var(--rule);
+  border-left:3px solid var(--hue);
+}
+.ticket.sketch:hover,.ticket.sketch:focus-visible{
+  transform:translateY(-2px);box-shadow:none;border-color:var(--hue);
+}
+.ticket.sketch::before{display:none}
+.ticket.sketch .body{padding:.75rem .9rem .2rem}
+.ticket.sketch h2{font-size:.97rem;font-weight:500;line-height:1.3}
+.ticket.sketch .stub{
+  border-top:none;padding:.35rem .9rem .7rem;
+  color:var(--on-ground-dim);font-size:.72rem;
+}
+.ticket.sketch .badges{border:none;font-style:italic}
+
+/* ── empty state ─────────────────────────────────────────────────────── */
+.empty{
+  margin:3rem 0 5rem;padding:2rem;border:1px dashed var(--rule);border-radius:4px;
+  max-width:44ch;
+}
+.empty h2{margin:0 0 .4rem;font-size:1.25rem;font-weight:700}
+.empty p{margin:0;color:var(--on-ground-dim)}
+
+/* ── detail ──────────────────────────────────────────────────────────── */
+dialog{
+  border:none;border-radius:4px;padding:0;max-width:640px;width:calc(100vw - 2rem);
+  background:var(--paper);color:var(--ink);box-shadow:0 30px 70px -20px rgba(0,0,0,.6);
+}
+dialog::backdrop{background:rgba(10,16,22,.62)}
+.d-plate{aspect-ratio:16/9;overflow:hidden;background:#E9E6DF}
+.d-plate img,.d-plate svg{width:100%;height:100%;object-fit:cover}
+.d-body{padding:1.4rem 1.5rem 1.5rem}
+.d-body h2{margin:0;font-size:1.6rem;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.d-hook{margin:.6rem 0 1.1rem;font-size:1.06rem;line-height:1.45;max-width:52ch}
+.d-specs{display:flex;flex-wrap:wrap;gap:1.4rem;border-top:1px solid var(--paper-edge);padding-top:.9rem;font-size:.9rem}
+.d-specs div span{display:block;font-size:.74rem;color:var(--ink-dim)}
+.d-earn{margin-top:1.1rem;border-top:1px solid var(--paper-edge);padding-top:.9rem}
+.d-earn p{margin:0 0 .45rem;font-size:.8rem;color:var(--ink-dim)}
+.d-actions{margin-top:1.3rem;display:flex;gap:.6rem;flex-wrap:wrap}
+.btn{
+  border:1px solid var(--ink);background:var(--ink);color:var(--paper);
+  border-radius:3px;padding:.5rem .95rem;font-size:.9rem;font-weight:600;cursor:pointer;
+}
+.btn.sec{background:transparent;color:var(--ink)}
+
+/* ── print: the card wall ────────────────────────────────────────────── */
+.printwall{display:none}
+@media print{
+  :root{--ground:#fff;--on-ground:#000;--paper:#fff;--paper-edge:#bbb}
+  body{background:#fff}
+  .masthead,.grid,.rack,dialog,.empty,.pagefoot{display:none !important}
+  .printwall{display:block}
+  .pcard{
+    break-inside:avoid;page-break-inside:avoid;
+    border:1px dashed #999;border-radius:3px;padding:.45in;margin:0 0 .18in;
+    height:4.6in;display:flex;flex-direction:column;
+  }
+  .printwall{columns:2;column-gap:.25in}
+  .pcard h3{margin:0;font-size:15pt;line-height:1.1;letter-spacing:-.01em}
+  .pcard .ph{margin:.14in 0 0;font-size:11pt;line-height:1.35}
+  .pcard .pm{margin-top:auto;font-size:9pt;border-top:1px solid #ccc;padding-top:.1in}
+  .pcard .pj{font-weight:700}
+}
+
+.pagefoot{border-top:1px solid var(--rule);padding:1.1rem 0 2.5rem;font-size:.84rem;color:var(--on-ground-dim)}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important;animation:none !important}
+}
+@media (prefers-reduced-motion:no-preference){
+  .ticket{animation:settle .34s cubic-bezier(.2,.7,.3,1) both}
+}
+@keyframes settle{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!--
+  ───────────────────────────────────────────────────────────────────────
+  SETUP
+
+  Option A — Publish to web (try this first)
+    Sheets → File → Share → Publish to web → pick the tab → CSV → Publish.
+    Paste that URL below. Google serves it with CORS open, and caches it
+    for roughly five minutes, so edits show up on the board within one
+    refresh cycle rather than instantly.
+
+  Option B — gviz (use if A won't load)
+    Share the sheet as "anyone with the link can view", then build:
+    https://docs.google.com/spreadsheets/d/SHEET_ID/gviz/tq?tqx=out:csv&sheet=TAB_NAME
+    Same columns, no publishing step, usually fresher.
+
+  COLUMNS: id, title, hook, discipline, scope, difficulty, image,
+  competencies, hide, notes, added
+
+  Only `title` is required. Everything else can be blank — a title-only
+  row shows up as a sketch. The only way to take a row off the board is
+  an x in `hide`. `notes` is never read by this page.
+
+  Leave CSV_URL empty and the page shows the built-in starter set.
+  ───────────────────────────────────────────────────────────────────────
+-->
+<script>
+const CSV_URL = "";
+const REFRESH_MINUTES = 5;   // set to 0 to load once and stop
+</script>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1><span>Project</span><span>bank</span></h1>
+    <p class="lede">Everything here is a real thing you could make, starting this week. Pull one down and it's yours. The rough ones at the bottom are ideas I haven't finished thinking about.</p>
+    <div class="rack" id="rack"></div>
+  </header>
+
+  <main>
+    <div class="grid" id="grid"></div>
+    <section id="sketches"></section>
+    <div class="empty" id="empty" hidden>
+      <h2>Nothing on the rack for that.</h2>
+      <p>Widen the filters, or come ask me — half the good ideas haven't been written down yet.</p>
+    </div>
+  </main>
+
+  <footer class="pagefoot">
+    <span id="foot"></span>
+    <span id="stamp" style="margin-left:.6rem"></span>
+    <button class="chip ghost" id="printbtn" style="margin-left:.6rem">Print these as pull cards</button>
+  </footer>
+</div>
+
+<div class="printwall" id="printwall"></div>
+
+<dialog id="detail"></dialog>
+
+<script>
+"use strict";
+
+/* ── starter data (used when CSV_URL is empty or unreachable) ────────── */
+const SEED = `id,title,hook,discipline,scope,difficulty,image,competencies,hide,notes,added
+P001,Scanner Glitch Portraits,Drag your face across a flatbed scanner and find out what the machine thinks a person looks like.,Photography,Day,1,,PHO-04;PHO-07;DES-02,,Works with the two Epsons. Warn them about the glass.,2026-09-01
+P002,"One Lamp, Ten Moods","One face, one lamp, ten photographs. Prove that lighting is the whole performance.",Photography,Day,1,,PHO-02;PHO-03,,,2026-09-01
+P003,Six In The Morning,Shoot the same place at 6am and at 6pm. Convince us it isn't the same place.,Photography,Week,2,,PHO-02;PHO-05;PHO-08,,,2026-09-01
+P004,Photograph Someone Who Scares You A Little,"Find a stranger in this building, ask for four minutes, and get them to look straight down the lens.",Photography,Week,3,,PHO-03;PHO-06;PRO-01,,The ask is the whole skill here. Prep them on approach.,2026-09-02
+P005,Food That Looks Wrong,"Light a plate of cafeteria food like a magazine cover, then light it like a crime scene.",Photography,Week,2,,PHO-02;PHO-04,,,2026-09-02
+P006,Rebrand The Worst Sign In Town,Pick a local business with a sign that's letting it down. Give it the identity it hasn't earned yet.,Graphic Design,Quarter,3,,DES-01;DES-03;DES-05;PRO-02,,Good portfolio centerpiece. Push them to a real print mockup.,2026-09-02
+P007,Type Only,Make a poster people stop walking for. You may not use a single image.,Graphic Design,Week,2,,DES-02;DES-04,,,2026-09-02
+P008,Cover For A Song That Has None,"Find a track with no artwork. Give it a front, a back, and a spine that belong together.",Graphic Design,Week,2,,DES-01;DES-04,,,2026-09-03
+P009,Sticker Worth Putting On A Laptop,Design one sticker good enough that someone else wants it. The test is whether they ask for one.,Graphic Design,Day,1,,DES-02;DES-06,,,2026-09-03
+P010,"Two Colors, Cheap Paper",Redesign a menu that has to print in two inks on the cheapest stock we have.,Graphic Design,Week,2,,DES-03;DES-05;PRO-03,,Ties to the press constraints unit.,2026-09-03
+P011,Sixty Seconds About One Person Here,Find someone in this building with a story. You get sixty seconds and you may not narrate it.,Video,Week,2,,VID-02;VID-05;PRO-01,,,2026-09-03
+P012,"One Scene, Three Cuts",Shoot one scene exactly once. Cut it three ways so it means three different things.,Video,Week,3,,VID-03;VID-06,,Best single lesson on editing I have. Push everyone toward it.,2026-09-04
+P013,Nobody Speaks,Tell a complete story in picture and sound. Not one word of dialogue.,Video,Week,3,,VID-03;VID-04;VID-06,,,2026-09-04
+P014,The Two-Minute How-To,"Teach a skill you actually have, in under two minutes, without saying um.",Video,Day,1,,VID-01;VID-04;PRO-01,,,2026-09-04
+P015,Cover The Game,"Cover a home game the way a network would: cold open, highlights, one interview, on air by Monday.",Video,Quarter,2,,VID-01;VID-05;VID-07;PRO-04,,Needs a crew of 3+. Deadline is the teacher.,2026-09-04
+P016,Make Something Walk That Shouldn't,Twelve frames. Give a convincing walk cycle to an object with no legs.,Animation,Week,2,,ANI-02;ANI-03,,,2026-09-05
+P017,Kinetic Type From A Voice Memo,Record someone saying something true. Make the words move the way they said them.,Animation,Week,2,,ANI-01;ANI-04;DES-02,,,2026-09-05
+P018,Four-Second Sting,Animate a logo that already exists into a four-second sting you'd be happy to see on air.,Animation,Day,2,,ANI-01;ANI-05,,,2026-09-05
+P019,A Site That's Worse On A Desktop,Build something that would be worse on a laptop. On purpose. Defend the choice.,Web Media,Week,2,,WEB-02;WEB-04,,,2026-09-05
+P020,Portfolio In Under A Second,Build your portfolio page so it finishes loading in one second on school wifi. Measure it.,Web Media,Quarter,3,,WEB-01;WEB-03;WEB-05;PRO-02,,Great excuse to teach image compression for real.,2026-09-06
+P021,"One Page, One Joke","Build a website that does exactly one funny thing, and does it perfectly.",Web Media,Day,1,,WEB-02;WEB-04,,,2026-09-06
+P022,"The Announcements, Rebuilt","Take over morning announcements for a week. New graphics package, new lower thirds, new theme.",Cross-discipline,Quarter,3,,VID-07;DES-04;ANI-05;PRO-04,,Needs admin sign-off first. Ask in August.,2026-09-06
+P023,Campaign In A Box,"Pick a cause you'd argue about. Deliver a poster, a thirty-second spot, a social set, and a landing page that all look like one thing.",Cross-discipline,Quarter,3,,DES-01;VID-02;WEB-01;PRO-02;PRO-03,,,2026-09-06
+P024,double exposure w/ old yearbook photos??,,Photography,,,,,,archive room has bound volumes back to 1961 — permission?,2026-09-07
+P025,risograph look without a risograph,,Graphic Design,,,,,,,2026-09-07
+P026,stop motion with the vinyl offcuts,,Animation,,,,,,bin by the cutter is always full,2026-09-07
+P027,green screen but the screen is the subject,,Video,,,,,,,2026-09-07
+P028,Shoot The Whole Roll In One Room,Thirty-six frames. One room. No leaving.,Photography,Week,2,,PHO-02;PHO-05,x,"Retired — ran it three years running, they're bored of it.",2025-09-01
+,light painting in the parking lot at night,,Photography,,,,,,,2026-09-20
+,type specimen poster but for a font you make,,Graphic Design,,,,,,,2026-09-20
+,interview someone who does the job you want,,Video,,,,,,ties to the O*NET unit,2026-09-20`;
+
+/* ── csv ─────────────────────────────────────────────────────────────── */
+function parseCSV(text){
+  const rows=[];let row=[],field="",q=false;
+  text=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){field+='"';i++;} else q=false; }
+      else field+=c;
+    } else if(c==='"'){ q=true; }
+    else if(c===','){ row.push(field); field=""; }
+    else if(c==='\n'){ row.push(field); field=""; rows.push(row); row=[]; }
+    else field+=c;
+  }
+  if(field.length||row.length){ row.push(field); rows.push(row); }
+  if(!rows.length) return [];
+  const head=rows.shift().map(h=>h.trim().toLowerCase());
+  return rows.filter(r=>r.some(c=>c.trim()!=="")).map(r=>{
+    const o={}; head.forEach((h,i)=>o[h]=(r[i]||"").trim()); return o;
+  });
+}
+
+const slug=s=>(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const esc=s=>(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* Live by default. The ONLY thing that removes a row from the board is an
+   x in the hide column. A row with no hook yet still shows up — as a sketch. */
+const HIDDEN=/^(x|y|yes|true|hide|retired)$/i;
+
+function normalize(rows){
+  return rows
+    .filter(r=>(r.title||"").trim() && !HIDDEN.test((r.hide||"").trim()))
+    .map((r,i)=>({
+      id:(r.id||"").trim()||("#"+String(i+1).padStart(3,"0")),
+      title:r.title.trim(),
+      hook:(r.hook||"").trim(),
+      discipline:(r.discipline||"").trim()||"Unsorted",
+      scope:(r.scope||"").trim(),
+      difficulty:parseInt(r.difficulty,10)||0,
+      image:(r.image||"").trim(),
+      comps:(r.competencies||"").split(/[;,]/).map(s=>s.trim()).filter(Boolean),
+      sketch:!(r.hook||"").trim()
+      /* r.notes is deliberately never read */
+    }));
+}
+
+/* ── generated plate (stands in until a reference image is added) ────── */
+function rng(seed){let h=2166136261;for(const ch of seed){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}
+  return()=>{h^=h<<13;h^=h>>>17;h^=h<<5;return((h>>>0)%10000)/10000;};}
+
+function plate(p){
+  const hue=`var(--h-${slug(p.discipline)||"cross-discipline"})`;
+  const r=rng(p.id+p.title), v=Math.floor(r()*3), a=r(), b=r();
+  const bits=[];
+  if(v===0){
+    for(let y=0;y<9;y++)for(let x=0;x<12;x++){
+      const t=(x/11)*0.75+(y/8)*0.25;
+      bits.push(`<circle cx="${x*33+22}" cy="${y*33+22}" r="${(1-t)*14+1.5}" fill="${hue}" opacity="${.22+t*.55}"/>`);
+    }
+  } else if(v===1){
+    const n=5+Math.floor(a*4);
+    for(let i=0;i<n;i++){
+      const w=40+r()*120, x=r()*400-60;
+      bits.push(`<rect x="${x}" y="-40" width="${w}" height="400" fill="${hue}" opacity="${.14+r()*.5}" transform="rotate(${-18+b*36} 200 150)"/>`);
+    }
+  } else {
+    for(let i=6;i>0;i--)bits.push(`<circle cx="200" cy="150" r="${i*24}" fill="none" stroke="${hue}" stroke-width="${1+i*.6}" opacity="${.14+i*.07}"/>`);
+    bits.push(`<path d="M200 60V240M110 150H290" stroke="${hue}" stroke-width="1.5" opacity=".7"/>`);
+    bits.push(`<rect x="24" y="24" width="26" height="26" fill="none" stroke="${hue}" stroke-width="2" opacity=".5"/>`);
+    bits.push(`<rect x="350" y="226" width="26" height="26" fill="none" stroke="${hue}" stroke-width="2" opacity=".5"/>`);
+  }
+  return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label=""><rect width="400" height="300" fill="#EDEAE3"/><g>${bits.join("")}</g></svg>`;
+}
+
+function plateHTML(p){
+  if(p.image) return `<img src="${esc(p.image)}" alt="" loading="lazy" onerror="this.closest('.plate,.d-plate').innerHTML=this.dataset.fb" data-fb="${esc(plate(p))}">`;
+  return plate(p);
+}
+
+/* ── state ───────────────────────────────────────────────────────────── */
+let ALL=[], fDisc=new Set(), fScope=new Set();
+const SCOPES=["Day","Week","Quarter"];
+const SCOPE_NOTE={Day:"a day",Week:"about a week",Quarter:"a quarter"};
+const DIFF_NOTE={1:"New to this",2:"You've done one before",3:"You know what you're doing"};
+
+function visible(){
+  return ALL.filter(p=>(!fDisc.size||fDisc.has(p.discipline))&&(!fScope.size||fScope.has(p.scope)));
+}
+
+function drawRack(){
+  const discs=[...new Set(ALL.map(p=>p.discipline))].filter(Boolean).sort();
+  const g=(label,items,set,hued)=>`<div class="rack-group">`+items.map(x=>
+    `<button class="chip" data-set="${label}" data-val="${esc(x)}" aria-pressed="${set.has(x)}"
+      ${hued?`style="--hue:var(--h-${slug(x)})"`:""}>${hued?'<span class="dot"></span>':""}${esc(x)}</button>`
+  ).join("")+`</div>`;
+  rack.innerHTML = g("disc",discs,fDisc,true)
+    + `<span class="rack-sep"></span>`
+    + g("scope",SCOPES.filter(s=>ALL.some(p=>p.scope===s)),fScope,false)
+    + `<span class="count" id="count"></span>`;
+  rack.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{
+    const set=b.dataset.set==="disc"?fDisc:fScope, v=b.dataset.val;
+    set.has(v)?set.delete(v):set.add(v);
+    drawRack(); draw();
+  }));
+}
+
+function card(p){
+  return `<button class="ticket" data-id="${esc(p.id)}" style="--hue:var(--h-${slug(p.discipline)||"cross-discipline"})">
+    <div class="plate">${plateHTML(p)}
+      ${p.scope?`<span class="scope">${esc(p.scope)}</span>`:""}
+    </div>
+    <div class="body">
+      <h2>${esc(p.title)}</h2>
+      <p class="hook">${esc(p.hook)}</p>
+    </div>
+    <div class="stub">
+      <span class="jobno">${esc(p.id)}</span>
+      <span class="diff" title="${DIFF_NOTE[p.difficulty]||""}" aria-label="${DIFF_NOTE[p.difficulty]||""}">
+        ${[1,2,3].map(n=>`<i class="${n<=p.difficulty?"on":""}"></i>`).join("")}
+      </span>
+      <span class="badges">${p.comps.slice(0,3).map(c=>`<b>${esc(c)}</b>`).join("")}</span>
+    </div>
+  </button>`;
+}
+
+function sketchCard(p){
+  return `<button class="ticket sketch" data-id="${esc(p.id)}" style="--hue:var(--h-${slug(p.discipline)||"cross-discipline"})">
+    <div class="body">
+      <h2>${esc(p.title)}</h2>
+    </div>
+    <div class="stub">
+      <span>${esc(p.discipline)}</span>
+      <span class="badges">Not built out yet</span>
+    </div>
+  </button>`;
+}
+
+function draw(){
+  const list=visible();
+  const done=list.filter(p=>!p.sketch), raw=list.filter(p=>p.sketch);
+  grid.innerHTML=done.map(card).join("");
+  sketches.innerHTML=raw.length
+    ? `<h2 class="sk-head">Half-formed. Come argue with me about one.</h2>
+       <div class="sk-grid">${raw.map(sketchCard).join("")}</div>` : "";
+  empty.hidden=list.length>0;
+  const c=document.getElementById("count");
+  if(c) c.textContent=`${list.length} of ${ALL.length}`;
+  foot.textContent=`${done.length} projects ready to go, ${raw.length} still cooking.`;
+  printwall.innerHTML=done.map(p=>`<div class="pcard">
+      <h3>${esc(p.title)}</h3><p class="ph">${esc(p.hook)}</p>
+      <div class="pm"><span class="pj">${esc(p.id)}</span> · ${esc(p.discipline)} · ${SCOPE_NOTE[p.scope]||esc(p.scope)}
+      <br>Earns: ${p.comps.join(", ")||"—"}</div></div>`).join("");
+  document.querySelectorAll(".ticket").forEach(b=>b.addEventListener("click",()=>openTicket(b.dataset.id)));
+}
+
+function openTicket(id){
+  const p=ALL.find(x=>x.id===id); if(!p)return;
+  detail.innerHTML=(p.sketch?"":`<div class="d-plate">${plateHTML(p)}</div>`)+`
+    <div class="d-body">
+      <h2>${esc(p.title)}</h2>
+      <p class="d-hook">${p.sketch
+        ? "This one's still just a sentence in my phone. If it sounds good to you, come find me and we'll figure out what it actually is."
+        : esc(p.hook)}</p>
+      <div class="d-specs">
+        <div><span>Discipline</span>${esc(p.discipline)}</div>${p.sketch?"":`
+        <div><span>Time it takes</span>${SCOPE_NOTE[p.scope]||esc(p.scope)||"—"}</div>
+        <div><span>Where you need to be</span>${DIFF_NOTE[p.difficulty]||"—"}</div>`}
+      </div>
+      ${p.comps.length?`<div class="d-earn"><p>Finish this and it counts toward</p>
+        <span class="badges" style="margin:0">${p.comps.map(c=>`<b>${esc(c)}</b>`).join("")}</span></div>`:""}
+      <div class="d-actions">
+        <button class="btn" value="close" autofocus>${p.sketch?"I want to build this out":"I'm taking this one"}</button>
+        <button class="btn sec" id="back">Back to the rack</button>
+      </div>
+    </div>`;
+  detail.showModal();
+  detail.querySelectorAll(".btn").forEach(b=>b.addEventListener("click",()=>detail.close()));
+}
+
+printbtn.addEventListener("click",()=>window.print());
+
+/* ── boot ────────────────────────────────────────────────────────────── */
+let usingSeed=true;
+const sig=()=>ALL.map(p=>[p.id,p.title,p.hook,p.image,p.comps.join()].join("~")).join("|");
+
+async function load(){
+  if(!CSV_URL){ ALL=normalize(parseCSV(SEED)); usingSeed=true; return true; }
+  try{
+    /* cb= only defeats the browser cache. Google's own ~5 min cache on a
+       published sheet is upstream of us and can't be bypassed. */
+    const url=CSV_URL+(CSV_URL.includes("?")?"&":"?")+"cb="+Date.now();
+    const res=await fetch(url,{cache:"no-store"});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const t=await res.text();
+    if(!t.trim()||/^\s*</.test(t)) throw new Error("got a web page, not CSV");
+    const rows=normalize(parseCSV(t));
+    if(!rows.length) throw new Error("no ready rows");
+    ALL=rows; usingSeed=false; return true;
+  }catch(e){
+    if(!ALL.length){ ALL=normalize(parseCSV(SEED)); usingSeed=true; }
+    return false;
+  }
+}
+
+function stamp(ok){
+  const el=document.getElementById("stamp");
+  if(!el) return;
+  if(CSV_URL&&!ok) el.textContent="Can't reach the sheet right now — showing the last good copy.";
+  else if(CSV_URL) el.textContent="Updated "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+  else el.textContent="";
+}
+
+(async function(){
+  const ok=await load();
+  drawRack(); draw(); stamp(ok);
+  if(CSV_URL&&REFRESH_MINUTES>0) setInterval(async()=>{
+    if(detail.open) return;                 // don't yank a card out from under a student
+    const before=sig();
+    const fresh=await load();
+    if(sig()!==before){ drawRack(); draw(); }
+    stamp(fresh);
+  },REFRESH_MINUTES*60000);
+})();
+</script>
+</body>
+</html>
